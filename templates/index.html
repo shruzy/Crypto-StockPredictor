@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Model Deployment</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-robot"></i> ML Model Deployment</h1>
+            <p>Deploy your cryptocurrency and stock prediction models</p>
+        </header>
+        
+        <div class="models-grid">
+            <div class="model-card crypto-card">
+                <div class="card-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <h2>Cryptocurrency Predictor</h2>
+                <p>Predict cryptocurrency prices using machine learning models</p>
+                <ul>
+                    <li><i class="fas fa-check"></i> Multiple cryptocurrencies supported</li>
+                    <li><i class="fas fa-check"></i> Real-time price predictions</li>
+                    <li><i class="fas fa-check"></i> Technical analysis features</li>
+                </ul>
+                <a href="/crypto" class="btn">Use Crypto Predictor</a>
+            </div>
+            
+            <div class="model-card stock-card">
+                <div class="card-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h2>Stock Predictor</h2>
+                <p>Predict stock market prices with advanced ML algorithms</p>
+                <ul>
+                    <li><i class="fas fa-check"></i> Major stocks analysis</li>
+                    <li><i class="fas fa-check"></i> Market trend predictions</li>
+                    <li><i class="fas fa-check"></i> Historical data integration</li>
+                </ul>
+                <a href="/stock" class="btn">Use Stock Predictor</a>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Models loaded: 
+                <span class="status {{ 'success' if crypto_model else 'error' }}">
+                    Cryptocurrency Model
+                </span> | 
+                <span class="status {{ 'success' if stock_model else 'error' }}">
+                    Stock Model
+                </span>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

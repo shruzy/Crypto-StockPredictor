@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Prediction</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-coins"></i> Cryptocurrency Price Predictor</h1>
+            <a href="/" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Home</a>
+        </header>
+        
+        <div class="prediction-container">
+            <div class="control-panel">
+                <h2><i class="fas fa-sliders-h"></i> Prediction Controls</h2>
+                
+                <div class="form-group">
+                    <label for="cryptoSelect"><i class="fas fa-list"></i> Select Cryptocurrency:</label>
+                    <select id="cryptoSelect" class="form-control">
+                        <option value="">-- Choose a Cryptocurrency --</option>
+                        {% for symbol, name in cryptos.items() %}
+                        <option value="{{ symbol }}" data-name="{{ name }}">{{ name }} ({{ symbol|upper }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <button id="predictBtn" class="btn predict-btn">
+                    <i class="fas fa-bolt"></i> Predict Price
+                </button>
+                
+                <div class="info-box">
+                    <h3><i class="fas fa-info-circle"></i> About the Model</h3>
+                    <p>This model analyzes historical price data, trading volume, and technical indicators to predict future cryptocurrency prices.</p>
+                    <p>Features used: Price, Volume, Moving Averages, Price Changes, Market Cap</p>
+                </div>
+            </div>
+            
+            <div class="results-panel">
+                <h2><i class="fas fa-chart-bar"></i> Prediction Results</h2>
+                
+                <div id="loading" class="loading" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i> Making prediction...
+                </div>
+                
+                <div id="results" class="results" style="display: none;">
+                    <div class="result-card">
+                        <div class="crypto-header">
+                            <div class="crypto-icon">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                            <div class="crypto-info">
+                                <h3 id="resultName">Cryptocurrency Name</h3>
+                                <p id="resultSymbol" class="symbol">SYMBOL</p>
+                            </div>
+                        </div>
+                        
+                        <div class="price-display">
+                            <div class="price-item current">
+                                <span class="price-label">Current Price</span>
+                                <span id="currentPrice" class="price-value">$0.00</span>
+                            </div>
+                            <div class="price-item predicted">
+                                <span class="price-label">Predicted Price</span>
+                                <span id="predictedPrice" class="price-value">$0.00</span>
+                            </div>
+                        </div>
+                        
+                        <div class="change-display">
+                            <span class="change-label">Expected Change:</span>
+                            <span id="priceChange" class="change-value positive">+0.00%</span>
+                        </div>
+                        
+                        <div class="timestamp">
+                            <i class="far fa-clock"></i>
+                            Prediction Time: <span id="predictionTime">--:--:--</span>
+                        </div>
+                    </div>
+                    
+                    <div class="features-box">
+                        <h4><i class="fas fa-cogs"></i> Features Used</h4>
+                        <div id="featuresList" class="features-list">
+                            <!-- Features will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="error" class="error-message" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span id="errorText">An error occurred</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('predictBtn').addEventListener('click', function() {
+            const select = document.getElementById('cryptoSelect');
+            const symbol = select.value;
+            const name = select.options[select.selectedIndex].getAttribute('data-name');
+            
+            if (!symbol) {
+                alert('Please select a cryptocurrency');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            
+            // Make prediction request
+            fetch('/predict/crypto', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: name,
+                    symbol: symbol
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                
+                if (data.success) {
+                    // Update results
+                    document.getElementById('resultName').textContent = data.crypto_name;
+                    document.getElementById('resultSymbol').textContent = data.symbol.toUpperCase();
+                    document.getElementById('currentPrice').textContent = '$' + data.current_price.toLocaleString();
+                    document.getElementById('predictedPrice').textContent = '$' + data.predicted_price.toLocaleString();
+                    
+                    const changeElement = document.getElementById('priceChange');
+                    changeElement.textContent = (data.price_change_percent >= 0 ? '+' : '') + 
+                                               data.price_change_percent.toFixed(2) + '%';
+                    changeElement.className = data.price_change_percent >= 0 ? 
+                                              'change-value positive' : 'change-value negative';
+                    
+                    document.getElementById('predictionTime').textContent = data.prediction_time;
+                    
+                    // Update features list
+                    const featuresList = document.getElementById('featuresList');
+                    featuresList.innerHTML = '';
+                    data.features_used.forEach(feature => {
+                        const featureItem = document.createElement('div');
+                        featureItem.className = 'feature-item';
+                        featureItem.innerHTML = `<i class="fas fa-check"></i> ${feature}`;
+                        featuresList.appendChild(featureItem);
+                    });
+                    
+                    document.getElementById('results').style.display = 'block';
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            })
+            .catch(error => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('errorText').textContent = error.message;
+                document.getElementById('error').style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>
